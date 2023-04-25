@@ -18,7 +18,7 @@ param (
 )
 
 # Ping to the on-prem IP address in a loop with interval of 5 seconds
-# If ping is not successful set the Routing weight of secondary connection to 100 and primary connection to 0
+# If ping is not successful set the Routing weight of secondary connection to 30 and primary connection to 20
 
 Connect-AzAccount
 

@@ -29,7 +29,7 @@ while ($true) {
     # If ping is not successful
     # Get the current time
     $currentTime = Get-Date
-    # Set the Routing weight of secondary connection to 100 and primary connection to 0
+    # Set the Routing weight of secondary connection to 30 and primary connection to 20
     Set-AzExpressRouteConnection -Name $PrimaryERConnectionName -ExpressRouteGatewayName $ExpressRouteGatewayName -RoutingWeight 20
     Set-AzExpressRouteConnection -Name $SecondaryERConnectionName -ExpressRouteGatewayName $ExpressRouteGatewayName -RoutingWeight 30
     Write-Host "$($currentTime): Ping to $OnpremIpAddress failed. Set the Routing weight of secondary connection to 30 and primary connection to 20"

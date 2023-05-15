@@ -29,7 +29,7 @@ while ($true) {
     $AzureTenantId= "<tenantid>"
     $AzureSubscriptionId = "<subscriptionid>"
     $AzureAplicationId ="<applicationid>"
-    $AzureApplicationSecret = ConvertTo-SecureString "h2l8Q~MaUKa1sDCAofj7WTZGa7JusyYAY7I9Nco9" -AsPlainText -Force
+    $AzureApplicationSecret = ConvertTo-SecureString "<applicationsecret" -AsPlainText -Force
     $psCred = New-Object System.Management.Automation.PSCredential($azureAplicationId , $AzureApplicationSecret)
     Connect-AzAccount -ServicePrincipal -Credential $psCred -Tenant $azureTenantId -Subscription $AzureSubscriptionId
     # Get the current time

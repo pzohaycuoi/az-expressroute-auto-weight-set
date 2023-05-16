@@ -1,4 +1,5 @@
 function Connect-ToAzureAccount {
+# INSERT CREDENTIAL HERE
   $Cred = [PSCustomObject]@{
     TenantId = "<tenand_id>"
     SubscriptionId = "<subscription_id>"
@@ -35,7 +36,7 @@ function Set-VpnConnectionWeight {
   }
 }
 
-
+# INSERT INFO HERE
 $PrimaryRouteIpAddress = "<primary_route_ip_address>"
 $PrimaryERConnectionName = "<primary_er_connection_name>"
 $SecondaryERConnectionName = "<secondary_er_connection_name>"

@@ -1,5 +1,5 @@
 function Connect-ToAzureAccount {
-# INSERT CREDENTIAL HERE
+  # INSERT CREDENTIAL HERE
   $Cred = [PSCustomObject]@{
     TenantId = "<tenand_id>"
     SubscriptionId = "<subscription_id>"
@@ -25,11 +25,20 @@ function Set-VpnConnectionWeight {
     Set-AzVirtualNetworkGatewayConnection -VirtualNetworkGatewayConnection $ConnectionName -Force
   }
   catch {
+    # IF RELATED TO CAN'T AUTHORIZE TRY CONNECT TO AZURE ACCOUNT AND RETRY
     if ($_.Exception.Message -like "*AuthorizationFailed*") {
-      Connect-ToAzureAccount
-      $ConnectionInfo = Get-AzVirtualNetworkGatewayConnection -Name $ConnectionName -ResourceGroupName $ResourceGroupName
-      $ConnectionInfo.RoutingWeight = $RoutingWeight
-      Set-AzVirtualNetworkGatewayConnection -VirtualNetworkGatewayConnection $ConnectionName -Force
+      i = 0
+      while (i -le 5) {
+        Connect-ToAzureAccount
+        $ConnectionInfo = Get-AzVirtualNetworkGatewayConnection -Name $ConnectionName -ResourceGroupName $ResourceGroupName
+        $ConnectionInfo.RoutingWeight = $RoutingWeight
+        Set-AzVirtualNetworkGatewayConnection -VirtualNetworkGatewayConnection $ConnectionName -Force
+        Write-Error -Exception "Try $($i): $($_.Exception.Message) Try again in 10 seconds"
+        sleep -seconds 10
+        if (i -eq 5) {
+          throw $_
+        }
+      }
     } else {
       throw $_
     }
@@ -73,7 +82,7 @@ while ($true) {
         Set-VpnConnectionWeight -ConnectionName $PrimaryERConnectionName -ResourceGroupName $ResourceGroup -RoutingWeight 30
         Set-VpnConnectionWeight -ConnectionName $SecondaryERConnectionName -ResourceGroupName $ResourceGroup -RoutingWeight 20
         Write-Host "$($currentTime): Ping to $OnpremIpAddress succeed. Set the Routing weight of secondary connection to 20 and primary connection to 30"
-        sleep -seconds 30
+        sleep -seconds 50
         break  # break only the inner while loop, so that it will return to the outer while loop
       }
     }

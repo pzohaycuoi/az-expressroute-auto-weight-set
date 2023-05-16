@@ -42,7 +42,7 @@ $SecondaryERConnectionName = "<secondary_er_connection_name>"
 
 # Monitor the primary route IP address, if it is not reachable, set the Routing weight of secondary connection to 30 and primary connection to 20
 while ($true) {
-  sleep -seconds 5
+  sleep -seconds 10
   # Ping the on-prem IP address
   $ping = Test-NetConnection $PrimaryRouteIpAddress
   Write-Host "Primary Route $($ping.RemoteAddress): $($ping.PingSucceeded)"
@@ -59,7 +59,6 @@ while ($true) {
 
     # Monitor the primary route IP address, if it is reachable, set the Routing weight of secondary connection to 20 and primary connection to 30
     while ($true) {
-      sleep -seconds 5
       # Ping the on-prem IP address
       $ping = Test-NetConnection $PrimaryRouteIpAddress
       Write-Host "Primary Route $($ping.RemoteAddress): $($ping.PingSucceeded)"
@@ -73,6 +72,7 @@ while ($true) {
         Set-VpnConnectionWeight -ConnectionName $PrimaryERConnectionName -ResourceGroupName $ResourceGroup -RoutingWeight 30
         Set-VpnConnectionWeight -ConnectionName $SecondaryERConnectionName -ResourceGroupName $ResourceGroup -RoutingWeight 20
         Write-Host "$($currentTime): Ping to $OnpremIpAddress succeed. Set the Routing weight of secondary connection to 20 and primary connection to 30"
+        sleep -seconds 30
         break  # break only the inner while loop, so that it will return to the outer while loop
       }
     }

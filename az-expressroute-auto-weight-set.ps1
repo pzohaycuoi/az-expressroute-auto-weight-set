@@ -6,8 +6,13 @@ function Connect-ToAzureAccount {
     AplicationId ="<application_id>"
     ApplicationSecret = ConvertTo-SecureString "<application_secret>" -AsPlainText -Force
   }
-  $psCred = New-Object System.Management.Automation.PSCredential($Cred.AplicationId , $Cred.ApplicationSecret)
-  Connect-AzAccount -ServicePrincipal -Credential $psCred -Tenant $Cred.TenantId -Subscription $Cred.SubscriptionId
+  try {
+    $psCred = New-Object System.Management.Automation.PSCredential($Cred.AplicationId , $Cred.ApplicationSecret)
+    Connect-AzAccount -ServicePrincipal -Credential $psCred -Tenant $Cred.TenantId -Subscription $Cred.SubscriptionId
+  }
+  catch {
+    throw $_
+  }
 }
 
 function Set-VpnConnectionWeight {
@@ -22,7 +27,7 @@ function Set-VpnConnectionWeight {
   try {
     $ConnectionInfo = Get-AzVirtualNetworkGatewayConnection -Name $ConnectionName -ResourceGroupName $ResourceGroupName
     $ConnectionInfo.RoutingWeight = $RoutingWeight
-    Set-AzVirtualNetworkGatewayConnection -VirtualNetworkGatewayConnection $ConnectionName -Force
+    Set-AzVirtualNetworkGatewayConnection -VirtualNetworkGatewayConnection $ConnectionInfo -Force
   }
   catch {
     # IF RELATED TO CAN'T AUTHORIZE TRY CONNECT TO AZURE ACCOUNT AND RETRY
@@ -32,7 +37,7 @@ function Set-VpnConnectionWeight {
         Connect-ToAzureAccount
         $ConnectionInfo = Get-AzVirtualNetworkGatewayConnection -Name $ConnectionName -ResourceGroupName $ResourceGroupName
         $ConnectionInfo.RoutingWeight = $RoutingWeight
-        Set-AzVirtualNetworkGatewayConnection -VirtualNetworkGatewayConnection $ConnectionName -Force
+        Set-AzVirtualNetworkGatewayConnection -VirtualNetworkGatewayConnection $ConnectionInfo -Force
         Write-Error -Exception "Try $($i): $($_.Exception.Message) Try again in 10 seconds"
         sleep -seconds 10
         if (i -eq 5) {
@@ -49,10 +54,11 @@ function Set-VpnConnectionWeight {
 $PrimaryRouteIpAddress = "<primary_route_ip_address>"
 $PrimaryERConnectionName = "<primary_er_connection_name>"
 $SecondaryERConnectionName = "<secondary_er_connection_name>"
+$ResourceGroup = "<resource_group>"
 
 # Monitor the primary route IP address, if it is not reachable, set the Routing weight of secondary connection to 30 and primary connection to 20
 while ($true) {
-  sleep -seconds 10
+  sleep -seconds 15
   # Ping the on-prem IP address
   $ping = Test-NetConnection $PrimaryRouteIpAddress
   Write-Host "Primary Route $($ping.RemoteAddress): $($ping.PingSucceeded)"
@@ -65,7 +71,7 @@ while ($true) {
     # Set the Routing weight of secondary connection to 30 and primary connection to 20
     Set-VpnConnectionWeight -ConnectionName $PrimaryERConnectionName -ResourceGroupName $ResourceGroup -RoutingWeight 20
     Set-VpnConnectionWeight -ConnectionName $SecondaryERConnectionName -ResourceGroupName $ResourceGroup -RoutingWeight 30
-    Write-Host "$($currentTime): Ping to $OnpremIpAddress failed. Set the Routing weight of secondary connection to 30 and primary connection to 20"
+    Write-Host "$($currentTime): Ping to $PrimaryRouteIpAddress failed. Set the Routing weight of secondary connection to 30 and primary connection to 20"
 
     # Monitor the primary route IP address, if it is reachable, set the Routing weight of secondary connection to 20 and primary connection to 30
     while ($true) {
@@ -81,7 +87,7 @@ while ($true) {
         # Set the Routing weight of secondary connection to 20 and primary connection to 30
         Set-VpnConnectionWeight -ConnectionName $PrimaryERConnectionName -ResourceGroupName $ResourceGroup -RoutingWeight 30
         Set-VpnConnectionWeight -ConnectionName $SecondaryERConnectionName -ResourceGroupName $ResourceGroup -RoutingWeight 20
-        Write-Host "$($currentTime): Ping to $OnpremIpAddress succeed. Set the Routing weight of secondary connection to 20 and primary connection to 30"
+        Write-Host "$($currentTime): Ping to $PrimaryRouteIpAddress succeed. Set the Routing weight of secondary connection to 20 and primary connection to 30"
         sleep -seconds 50
         break  # break only the inner while loop, so that it will return to the outer while loop
       }
